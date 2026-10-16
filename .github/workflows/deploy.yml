@@ -1,0 +1,118 @@
+name: CloudServe CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "app/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: cloudserve-deployment
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ap-south-1
+  AWS_ACCOUNT_ID: "947317651355"
+  ECR_REPOSITORY: cloudserve
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials using OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::947317651355:role/CloudServeGitHubActionsRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build \
+            -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
+            -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" \
+            ./app
+
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
+      - name: Prepare deployment command
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          jq -n \
+            --arg registry "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY" \
+            --arg tag "$IMAGE_TAG" \
+            '{
+              commands: [
+                "set -e",
+                ("aws ecr get-login-password --region " + "'"$AWS_REGION"'" + " | docker login --username AWS --password-stdin " + $registry),
+                ("docker pull " + $registry + ":" + $tag),
+                "docker rm -f cloudserve || true",
+                ("docker run -d --restart unless-stopped --name cloudserve -p 127.0.0.1:5000:5000 " + $registry + ":" + $tag),
+                "sleep 5",
+                "curl -fsS http://127.0.0.1:5000/health"
+              ]
+            }' > deployment-parameters.json
+
+      - name: Deploy through AWS Systems Manager
+        id: deploy
+        run: |
+          COMMAND_ID=$(aws ssm send-command \
+            --targets "Key=tag:Project,Values=cloudserve" "Key=tag:Environment,Values=dev" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploy CloudServe commit $GITHUB_SHA" \
+            --parameters file://deployment-parameters.json \
+            --query "Command.CommandId" \
+            --output text)
+
+          echo "command_id=$COMMAND_ID" >> "$GITHUB_OUTPUT"
+          echo "SSM command submitted: $COMMAND_ID"
+
+          for i in $(seq 1 30); do
+            STATUS=$(aws ssm list-command-invocations \
+              --command-id "$COMMAND_ID" \
+              --details \
+              --query "CommandInvocations[0].Status" \
+              --output text)
+
+            echo "Deployment status: $STATUS"
+
+            if [ "$STATUS" = "Success" ]; then
+              exit 0
+            fi
+
+            if [ "$STATUS" = "Failed" ] || \
+               [ "$STATUS" = "TimedOut" ] || \
+               [ "$STATUS" = "Cancelled" ]; then
+              aws ssm list-command-invocations \
+                --command-id "$COMMAND_ID" \
+                --details
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          echo "Timed out waiting for the deployment command."
+          exit 1
+
+      - name: Remove temporary deployment file
+        if: always()
+        run: rm -f deployment-parameters.json
