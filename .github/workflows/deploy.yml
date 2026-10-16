@@ -7,6 +7,8 @@ on:
       - main
     paths:
       - "app/**"
+      - "scripts/deploy-on-ec2.sh"
+      - ".github/workflows/deploy.yml"
 
 permissions:
   contents: read
@@ -43,6 +45,7 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
+        shell: bash
         run: |
           set -euo pipefail
 
@@ -57,34 +60,49 @@ jobs:
       - name: Prepare deployment command
         env:
           IMAGE_TAG: ${{ github.sha }}
+        shell: bash
         run: |
           set -euo pipefail
 
           REGISTRY="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY"
+          IMAGE_URI="$REGISTRY:$IMAGE_TAG"
+          SCRIPT_URL="https://raw.githubusercontent.com/omkrve/cloudserve2/${GITHUB_SHA}/scripts/deploy-on-ec2.sh"
+
+          # Validate that the versioned script exists and matches this commit.
+          curl --fail --silent --show-error --location \
+            "$SCRIPT_URL" -o downloaded-deploy-script.sh
+
+          cmp scripts/deploy-on-ec2.sh downloaded-deploy-script.sh
 
           jq -n \
-            --arg registry "$REGISTRY" \
-            --arg tag "$IMAGE_TAG" \
             --arg region "$AWS_REGION" \
+            --arg registry "$REGISTRY" \
+            --arg script_url "$SCRIPT_URL" \
+            --arg image_uri "$IMAGE_URI" \
             '{
               commands: [
                 "set -e",
                 ("aws ecr get-login-password --region " + $region + " | docker login --username AWS --password-stdin " + $registry),
-                ("docker pull " + $registry + ":" + $tag),
-                "docker rm -f cloudserve || true",
-                ("docker run -d --restart unless-stopped --name cloudserve -p 127.0.0.1:5000:5000 " + $registry + ":" + $tag),
-                "sleep 5",
-                "curl -fsS http://127.0.0.1:5000/health"
+                ("curl --fail --silent --show-error --location " + $script_url + " -o /tmp/cloudserve-deploy.sh"),
+                "chmod 700 /tmp/cloudserve-deploy.sh",
+                ("bash /tmp/cloudserve-deploy.sh " + $image_uri),
+                "rm -f /tmp/cloudserve-deploy.sh"
               ]
             }' > deployment-parameters.json
 
+          jq -e '.commands | type == "array"' deployment-parameters.json >/dev/null
+          rm -f downloaded-deploy-script.sh
+
       - name: Deploy through AWS Systems Manager
         id: deploy
+        shell: bash
         run: |
           set -euo pipefail
 
           COMMAND_ID=$(aws ssm send-command \
-            --targets "Key=tag:Project,Values=cloudserve" "Key=tag:Environment,Values=dev" \
+            --targets \
+              "Key=tag:Project,Values=cloudserve" \
+              "Key=tag:Environment,Values=dev" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy CloudServe commit $GITHUB_SHA" \
             --parameters file://deployment-parameters.json \
@@ -119,9 +137,9 @@ jobs:
             sleep 10
           done
 
-          echo "Timed out waiting for the deployment command."
+          echo "Timed out waiting for deployment command."
           exit 1
 
-      - name: Remove temporary deployment file
+      - name: Remove temporary deployment files
         if: always()
-        run: rm -f deployment-parameters.json
+        run: rm -f deployment-parameters.json downloaded-deploy-script.sh
