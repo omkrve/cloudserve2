@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - "app/**"
+      - ".github/workflows/deploy.yml"
 
 permissions:
   contents: read
@@ -44,6 +45,8 @@ jobs:
           ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          set -euo pipefail
+
           docker build \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" \
             -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" \
@@ -56,13 +59,18 @@ jobs:
         env:
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          set -euo pipefail
+
+          REGISTRY="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY"
+
           jq -n \
-            --arg registry "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY" \
+            --arg registry "$REGISTRY" \
             --arg tag "$IMAGE_TAG" \
+            --arg region "$AWS_REGION" \
             '{
               commands: [
                 "set -e",
-                ("aws ecr get-login-password --region " + "'"$AWS_REGION"'" + " | docker login --username AWS --password-stdin " + $registry),
+                ("aws ecr get-login-password --region " + $region + " | docker login --username AWS --password-stdin " + $registry),
                 ("docker pull " + $registry + ":" + $tag),
                 "docker rm -f cloudserve || true",
                 ("docker run -d --restart unless-stopped --name cloudserve -p 127.0.0.1:5000:5000 " + $registry + ":" + $tag),
@@ -74,6 +82,8 @@ jobs:
       - name: Deploy through AWS Systems Manager
         id: deploy
         run: |
+          set -euo pipefail
+
           COMMAND_ID=$(aws ssm send-command \
             --targets "Key=tag:Project,Values=cloudserve" "Key=tag:Environment,Values=dev" \
             --document-name "AWS-RunShellScript" \
