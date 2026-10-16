@@ -142,7 +142,7 @@ def init_db():
 
         if not existing:
             db.execute(
-                """INSERT INTO users
+                """INSERT OR IGNORE INTO users
                    (username, email, password_hash, role, created_at)
                    VALUES (?, ?, ?, 'admin', ?)""",
                 (
