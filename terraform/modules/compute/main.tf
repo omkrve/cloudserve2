@@ -53,14 +53,42 @@ resource "aws_instance" "main" {
 
   associate_public_ip_address = true
 
-  user_data = <<-EOF
-    #!/bin/bash
-    set -eux
-    dnf install -y docker
-    systemctl enable --now docker
-  EOF
+
+  user_data = <<-BOOTSTRAP
+  #!/bin/bash
+  set -euxo pipefail
+
+  dnf install -y docker nginx
+
+  systemctl enable --now docker
+  systemctl enable --now nginx
+
+  mkdir -p /opt/cloudserve
+
+  rm -f /etc/nginx/conf.d/default.conf
+
+  cat > /etc/nginx/conf.d/cloudserve.conf <<'NGINX'
+  server {
+      listen 80;
+      server_name _;
+
+      location / {
+          proxy_pass http://127.0.0.1:5000;
+          proxy_http_version 1.1;
+          proxy_set_header Host $host;
+          proxy_set_header X-Real-IP $remote_addr;
+          proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+          proxy_set_header X-Forwarded-Proto $scheme;
+      }
+  }
+  NGINX
+
+  nginx -t
+  systemctl reload nginx
+BOOTSTRAP
 
   user_data_replace_on_change = true
+
 
   metadata_options {
     http_endpoint = "enabled"
