@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}New ticket | CloudServe{% endblock %}
+{% block content %}
+<div class="pt-4">
+  <a href="{{ url_for('dashboard') }}" class="crumb">{{ icon('back', 15) }} Dashboard</a>
+</div>
+<div class="page-head" style="margin-top:14px">
+  <div>
+    <h1>Report a technical issue</h1>
+    <p>The more detail you give, the faster support can help.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <form method="post" enctype="multipart/form-data" class="card-s">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label class="form-label" for="title">Issue title</label>
+      <input class="form-control" id="title" name="title" maxlength="120" required autofocus
+             placeholder="e.g. Unable to connect to office Wi-Fi">
+
+      <div class="field-row mt-4"><label class="form-label" for="description">What happened?</label><span class="counter" id="desc-count">0 / 10000</span></div>
+      <textarea class="form-control" id="description" name="description" rows="6" minlength="10" maxlength="10000" required
+                data-counter="#desc-count" placeholder="Describe the problem and what you have already tried."></textarea>
+
+      <label class="form-label mt-4 d-block">Category</label>
+      <div class="choice-grid">
+        {% for c, hint in [('Hardware','Laptops, printers, peripherals'), ('Software','Apps, installs, crashes'), ('Network','Wi-Fi, VPN, connectivity'), ('Account Access','Passwords, permissions, lockouts'), ('Other',"Anything that doesn't fit")] %}
+        <label class="choice">
+          <input type="radio" name="category" value="{{ c }}" required>
+          <span class="box"><b>{{ c }}</b><small>{{ hint }}</small></span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <label class="form-label mt-4 d-block">Priority</label>
+      <div class="seg">
+        {% for p in ['Low','Medium','High','Critical'] %}
+        <label class="choice pr-{{ p|lower }}" style="--c:var(--{{ {'Low':'ok','Medium':'warn','High':'hot','Critical':'bad'}[p] }})">
+          <input type="radio" name="priority" value="{{ p }}" {% if p == 'Medium' %}checked{% endif %}>
+          <span class="box">{{ p }}</span>
+        </label>
+        {% endfor %}
+      </div>
+
+      <label class="form-label mt-4 d-block">Attachment <span class="text-secondary fw-normal">(optional)</span></label>
+      <label class="dropzone" id="dropzone">
+        <span class="dz-icon">{{ icon('upload', 20) }}</span>
+        <span><b>Drop a file or click to browse</b><small id="dz-name">PNG, JPG, PDF, TXT or LOG, up to 5 MB</small></span>
+        <input type="file" name="attachment" accept=".png,.jpg,.jpeg,.pdf,.txt,.log">
+      </label>
+
+      <div class="d-flex flex-wrap gap-2 mt-4 pt-2">
+        <button class="btn btn-primary btn-lg">Submit ticket</button>
+        <a class="btn btn-lg btn-ghost" href="{{ url_for('dashboard') }}">Cancel</a>
+      </div>
+    </form>
+  </div>
+
+  <aside class="col-lg-4">
+    <div class="card-s flat mb-3">
+      <h2 class="section-title mb-3">Choosing a priority</h2>
+      <div class="d-grid gap-3 small">
+        <div><span class="pill pr-critical mb-1">Critical</span><div class="text-secondary">Work is blocked for you or a whole team.</div></div>
+        <div><span class="pill pr-high mb-1">High</span><div class="text-secondary">Major slowdown with no workaround.</div></div>
+        <div><span class="pill pr-medium mb-1">Medium</span><div class="text-secondary">Annoying, but you can keep working.</div></div>
+        <div><span class="pill pr-low mb-1">Low</span><div class="text-secondary">A question or minor request.</div></div>
+      </div>
+    </div>
+    <div class="card-s flat">
+      <h2 class="section-title mb-3">Faster fixes</h2>
+      <ul class="small text-secondary ps-3 mb-0 d-grid gap-2">
+        <li>Include the exact error message.</li>
+        <li>Say when the issue started.</li>
+        <li>Attach a screenshot or log if you have one.</li>
+      </ul>
+    </div>
+  </aside>
+</div>
+{% endblock %}

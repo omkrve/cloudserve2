@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, avatar, status_pill, priority_pill %}
+{% block title %}CS-{{ '%04d'|format(ticket.id) }} | CloudServe{% endblock %}
+{% block content %}
+{% set flow = ['Open', 'In Progress', 'Resolved', 'Closed'] %}
+{% set idx = flow.index(ticket.status) if ticket.status in flow else 0 %}
+{% set is_admin = current_user.role == 'admin' %}
+{% set agent_map = {} %}
+{% for a in agents %}{% set _ = agent_map.update({a.id|string: a.username}) %}{% endfor %}
+
+<div class="pt-4"><a href="{{ url_for('dashboard') }}" class="crumb">{{ icon('back', 15) }} Dashboard</a></div>
+
+<div class="page-head" style="margin-top:14px">
+  <div style="min-width:0">
+    <div class="id-chip mb-1">CS-{{ '%04d'|format(ticket.id) }}</div>
+    <h1 style="overflow-wrap:anywhere">{{ ticket.title }}</h1>
+    <p class="d-flex flex-wrap align-items-center gap-2 mt-2">
+      {{ avatar(ticket.requester, 'sm') }}<span>{{ ticket.requester }}</span>
+      <span>·</span><span>Opened {{ ticket.created_at[:10] }}</span>
+    </p>
+  </div>
+  {{ status_pill(ticket.status, true) }}
+</div>
+
+<div class="track" aria-label="Ticket progress">
+  {% for s in flow %}<div class="{{ 'done' if loop.index0 < idx else ('now' if loop.index0 == idx else '') }}">{{ s }}</div>{% endfor %}
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-8">
+    <section class="card-s mb-4">
+      <h2 class="section-title mb-3">Description</h2>
+      <p class="preserve-lines mb-0">{{ ticket.description }}</p>
+
+      {% if ticket.attachment_disk_name %}
+        <a class="attach" href="{{ url_for('download_attachment', ticket_id=ticket.id) }}">
+          {{ icon('clip', 16) }}<span class="text-truncate">{{ ticket.attachment_name }}</span>
+          <span class="text-secondary fw-normal">Download</span>
+        </a>
+      {% endif %}
+
+      <div class="facts">
+        <div class="fact"><small>Category</small><b>{{ ticket.category }}</b></div>
+        <div class="fact"><small>Priority</small>{{ priority_pill(ticket.priority) }}</div>
+        <div class="fact"><small>Assigned to</small><b>{{ ticket.assignee or 'Unassigned' }}</b></div>
+        <div class="fact"><small>Last update</small><b>{{ ticket.updated_at[:10] }}</b></div>
+      </div>
+    </section>
+
+    <section class="card-s">
+      <h2 class="section-title">Conversation <span class="text-secondary fw-normal">({{ comments|length }})</span></h2>
+      {% for c in comments %}
+        <div class="msg {{ 'staff' if c.role == 'admin' }}">
+          {{ avatar(c.username) }}
+          <div class="bubble">
+            <div class="who">
+              <strong>{{ c.username }}</strong>
+              {% if c.role == 'admin' %}<span class="tag">Support</span>{% endif %}
+              <time>{{ c.created_at[:10] }} {{ c.created_at[11:16] }}</time>
+            </div>
+            <div class="preserve-lines mt-1">{{ c.body }}</div>
+          </div>
+        </div>
+      {% else %}
+        <p class="text-secondary mt-3 mb-0">No replies yet. Add an update or ask a question below.</p>
+      {% endfor %}
+
+      <div class="composer">
+        {{ avatar(current_user.username) }}
+        <form method="post" action="{{ url_for('add_comment', ticket_id=ticket.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <textarea class="form-control" name="body" rows="3" maxlength="3000" required data-counter="#cm-count"
+                    aria-label="Add a comment" placeholder="Share an update or ask a question"></textarea>
+          <div class="d-flex justify-content-between align-items-center mt-3">
+            <span class="counter" id="cm-count">0 / 3000</span>
+            <button class="btn btn-primary">Post comment</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="sticky-side d-grid gap-4">
+      {% if is_admin %}
+      <section class="card-s">
+        <h2 class="section-title mb-3">Manage ticket</h2>
+        <form method="post" action="{{ url_for('manage_ticket', ticket_id=ticket.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="form-label" for="status">Status</label>
+          <select class="form-select" id="status" name="status">
+            {% for s in statuses %}<option value="{{ s }}" {% if s == ticket.status %}selected{% endif %}>{{ s }}</option>{% endfor %}
+          </select>
+          <label class="form-label mt-3" for="priority">Priority</label>
+          <select class="form-select" id="priority" name="priority">
+            {% for p in priorities %}<option value="{{ p }}" {% if p == ticket.priority %}selected{% endif %}>{{ p }}</option>{% endfor %}
+          </select>
+          <label class="form-label mt-3" for="assigned_to">Assignee</label>
+          <select class="form-select" id="assigned_to" name="assigned_to">
+            <option value="">Unassigned</option>
+            {% for agent in agents %}
+              <option value="{{ agent.id }}" {% if ticket.assigned_to == agent.id %}selected{% endif %}>{{ agent.username }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn btn-primary w-100 mt-4">Save changes</button>
+        </form>
+      </section>
+      {% endif %}
+
+      <section class="card-s">
+        <h2 class="section-title">Activity</h2>
+        <div class="timeline">
+          {% for h in history %}
+            <div class="tl-item">
+              <div class="fw-semibold">{{ h.action }}</div>
+              <div class="meta">{{ h.username }} · {{ h.created_at[:10] }} {{ h.created_at[11:16] }}</div>
+              {% if h.old_value or h.new_value %}
+                {% if h.action == 'Assignee changed' %}
+                  {% set ov = agent_map.get(h.old_value, 'Unassigned') if h.old_value else 'Unassigned' %}
+                  {% set nv = agent_map.get(h.new_value, 'Unassigned') if h.new_value else 'Unassigned' %}
+                {% else %}
+                  {% set ov = h.old_value or '—' %}{% set nv = h.new_value or '—' %}
+                {% endif %}
+                <div class="delta">{{ ov }} {{ icon('arrow', 13) }} <b class="text-body">{{ nv }}</b></div>
+              {% endif %}
+            </div>
+          {% else %}
+            <p class="text-secondary mb-0 mt-3">No activity yet.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% endblock %}

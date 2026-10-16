@@ -1,0 +1,27 @@
+{% macro avatar(name, size='') -%}
+{%- set n = (name or '?') -%}
+<span class="avatar {{ size }}" style="--h: {{ ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'.find(n[0]|upper) * 14 + n|length * 9) % 360 }}" aria-hidden="true">{{ n[0]|upper }}</span>
+{%- endmacro %}
+
+{% macro status_pill(s, large=false) -%}
+<span class="pill st-{{ s|lower|replace(' ', '-') }}{{ ' pill-lg' if large }}"><i></i>{{ s }}</span>
+{%- endmacro %}
+
+{% macro priority_pill(p) -%}
+<span class="pill pr-{{ p|lower }}">{{ p }}</span>
+{%- endmacro %}
+
+{% macro icon(name, size=18) -%}
+<svg width="{{ size }}" height="{{ size }}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{%- if name == 'cloud' %}<path d="M17.5 19a4.5 4.5 0 0 0 .5-8.97A6 6 0 0 0 6.3 9.6 4.8 4.8 0 0 0 7 19z"/>
+{%- elif name == 'plus' %}<path d="M12 5v14M5 12h14"/>
+{%- elif name == 'search' %}<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+{%- elif name == 'inbox' %}<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13l3.5 7v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-6z"/>
+{%- elif name == 'clip' %}<path d="m21 11.5-8.6 8.6a5.5 5.5 0 0 1-7.8-7.8l8.6-8.6a3.7 3.7 0 0 1 5.2 5.2l-8.6 8.6a1.8 1.8 0 0 1-2.6-2.6l7.9-7.9"/>
+{%- elif name == 'upload' %}<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>
+{%- elif name == 'back' %}<path d="m15 18-6-6 6-6"/>
+{%- elif name == 'sun' %}<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+{%- elif name == 'moon' %}<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+{%- elif name == 'arrow' %}<path d="M5 12h14M13 6l6 6-6 6"/>
+{%- endif %}</svg>
+{%- endmacro %}

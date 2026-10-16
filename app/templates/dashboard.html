@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, avatar, status_pill, priority_pill %}
+{% block title %}Dashboard | CloudServe{% endblock %}
+{% block content %}
+{% set n_open = counts.get('Open', 0) %}
+{% set n_prog = counts.get('In Progress', 0) %}
+{% set n_res = counts.get('Resolved', 0) %}
+{% set n_closed = counts.get('Closed', 0) %}
+
+<div class="page-head">
+  <div>
+    <p class="small fw-semibold mb-2" style="color:var(--accent)">{{ 'Administration' if is_admin else 'My workspace' }}</p>
+    <h1>{{ 'Support queue' if is_admin else 'Hi, ' ~ current_user.username }}</h1>
+    <p>{{ 'Review, assign and resolve submitted requests.' if is_admin else 'Track the technical issues you have reported.' }}</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('new_ticket') }}">{{ icon('plus', 16) }} New ticket</a>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="l"><i style="--c:var(--ink)"></i>Total tickets</div><div class="v">{{ total }}</div></div>
+  <div class="kpi"><div class="l"><i style="--c:var(--accent)"></i>Open</div><div class="v">{{ n_open }}</div></div>
+  <div class="kpi"><div class="l"><i style="--c:var(--warn)"></i>In progress</div><div class="v">{{ n_prog }}</div></div>
+  <div class="kpi"><div class="l"><i style="--c:var(--ok)"></i>Resolved</div><div class="v">{{ n_res }}</div></div>
+</div>
+
+{% if total %}
+<div class="card-s flat mt-3 py-3">
+  <div class="dist" role="img" aria-label="Ticket status breakdown">
+    {% for label, n, color in [('Open', n_open, 'var(--accent)'), ('In progress', n_prog, 'var(--warn)'), ('Resolved', n_res, 'var(--ok)'), ('Closed', n_closed, 'var(--idle)')] if n %}
+      <span style="--c:{{ color }};flex:{{ n }}" title="{{ label }}: {{ n }}"></span>
+    {% endfor %}
+  </div>
+  <div class="legend">
+    <span><i style="--c:var(--accent)"></i>Open {{ n_open }}</span>
+    <span><i style="--c:var(--warn)"></i>In progress {{ n_prog }}</span>
+    <span><i style="--c:var(--ok)"></i>Resolved {{ n_res }}</span>
+    <span><i style="--c:var(--idle)"></i>Closed {{ n_closed }}</span>
+  </div>
+</div>
+{% endif %}
+
+<section class="card-s mt-4 p-0 overflow-hidden">
+  <div class="p-3 p-md-4 pb-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="section-title">Recent tickets</h2>
+      <span class="text-secondary small"><span id="shown-count">{{ tickets|length }}</span> shown</span>
+    </div>
+    {% if tickets %}
+    <div class="toolbar">
+      <div class="chips" role="tablist" aria-label="Filter by status">
+        <button class="chip active" data-filter="all" type="button">All</button>
+        <button class="chip" data-filter="open" type="button">Open</button>
+        <button class="chip" data-filter="in-progress" type="button">In progress</button>
+        <button class="chip" data-filter="resolved" type="button">Resolved</button>
+        <button class="chip" data-filter="closed" type="button">Closed</button>
+      </div>
+      <label class="search mb-0">
+        {{ icon('search', 16) }}
+        <input class="form-control" id="ticket-search" type="search" placeholder="Search tickets" aria-label="Search tickets">
+      </label>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if tickets %}
+  <div class="table-responsive">
+    <table class="tbl">
+      <thead><tr>
+        <th class="ps-md-4">Ticket</th>
+        {% if is_admin %}<th class="d-none d-md-table-cell">Requester</th>{% endif %}
+        <th class="d-none d-sm-table-cell">Priority</th><th>Status</th>
+        <th class="d-none d-lg-table-cell">Updated</th><th></th>
+      </tr></thead>
+      <tbody id="ticket-rows">
+      {% for t in tickets %}
+        <tr data-status="{{ t.status|lower|replace(' ', '-') }}"
+            data-search="cs-{{ '%04d'|format(t.id) }} {{ t.title|lower }} {{ t.category|lower }} {{ t.requester|lower }}">
+          <td class="ps-md-4">
+            <a class="row-link" href="{{ url_for('ticket_detail', ticket_id=t.id) }}">
+              <div class="t-title">{{ t.title }}</div>
+              <div class="small text-secondary"><span class="id-chip">CS-{{ '%04d'|format(t.id) }}</span> · {{ t.category }}</div>
+            </a>
+          </td>
+          {% if is_admin %}
+          <td class="d-none d-md-table-cell"><span class="d-inline-flex align-items-center gap-2">{{ avatar(t.requester, 'sm') }}{{ t.requester }}</span></td>
+          {% endif %}
+          <td class="d-none d-sm-table-cell">{{ priority_pill(t.priority) }}</td>
+          <td>{{ status_pill(t.status) }}</td>
+          <td class="d-none d-lg-table-cell small text-secondary">{{ t.updated_at[:10] }}</td>
+          <td class="text-end pe-md-4"><a class="btn btn-sm btn-ghost" href="{{ url_for('ticket_detail', ticket_id=t.id) }}">Open</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="empty" id="no-match" hidden>
+    <h5>No matching tickets</h5>
+    <p>Try a different search or clear the status filter.</p>
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="ico">{{ icon('inbox', 24) }}</div>
+    <h5>{{ 'The queue is clear' if is_admin else 'No tickets yet' }}</h5>
+    <p>{{ 'New support requests will show up here as soon as they are submitted.' if is_admin else 'Something not working? Create a ticket and support will pick it up.' }}</p>
+    <a class="btn btn-primary" href="{{ url_for('new_ticket') }}">{{ icon('plus', 16) }} Create ticket</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

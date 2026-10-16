@@ -25,3 +25,17 @@ venv/
 # Editor files
 .vscode/
 .idea/
+
+
+# CloudServe local database and uploaded attachments
+app/data/
+app/uploads/
+app/instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Runtime secrets and local configuration
+.env
+.env.*
+!.env.example

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Log in | CloudServe{% endblock %}
+{% block content %}
+<div class="auth">
+  <aside class="auth-aside">
+    <a class="brand text-white" href="{{ url_for('index') }}"><span class="brand-mark">{{ icon('cloud', 16) }}</span>CloudServe</a>
+    <div>
+      <h2>Pick up where you left off.</h2>
+      <ul>
+        <li>See the live status of every request you opened</li>
+        <li>Reply to support without leaving the ticket</li>
+        <li>Keep a full history of what changed and when</li>
+      </ul>
+    </div>
+    <small style="color:rgba(255,255,255,.5)">CloudServe IT Service Desk</small>
+  </aside>
+  <section class="auth-main">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <h1>Log in</h1>
+      <p class="text-secondary mb-4">Enter your details to manage your tickets.</p>
+
+      <label class="form-label" for="identity">Username or email</label>
+      <input class="form-control" id="identity" name="identity" required autocomplete="username" autofocus>
+
+      <label class="form-label mt-3" for="pw">Password</label>
+      <div class="pw-wrap">
+        <input class="form-control" id="pw" type="password" name="password" required autocomplete="current-password">
+        <button class="pw-toggle" type="button" aria-label="Show or hide password">Show</button>
+      </div>
+
+      <button class="btn btn-primary btn-lg w-100 mt-4">Log in</button>
+      <p class="small text-secondary mt-4 mb-0">New to CloudServe? <a href="{{ url_for('register') }}">Create an account</a></p>
+    </form>
+  </section>
+</div>
+{% endblock %}

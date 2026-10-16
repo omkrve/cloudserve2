@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Create account | CloudServe{% endblock %}
+{% block content %}
+<div class="auth">
+  <aside class="auth-aside">
+    <a class="brand text-white" href="{{ url_for('index') }}"><span class="brand-mark">{{ icon('cloud', 16) }}</span>CloudServe</a>
+    <div>
+      <h2>Your IT requests, finally in one place.</h2>
+      <ul>
+        <li>Submit a ticket in under a minute</li>
+        <li>Attach screenshots, PDFs and logs</li>
+        <li>Your tickets stay private to you and support admins</li>
+      </ul>
+    </div>
+    <small style="color:rgba(255,255,255,.5)">CloudServe IT Service Desk</small>
+  </aside>
+  <section class="auth-main">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <h1>Create your account</h1>
+      <p class="text-secondary mb-4">Register to submit and track support tickets.</p>
+
+      <label class="form-label" for="username">Username</label>
+      <input class="form-control" id="username" name="username" minlength="3" maxlength="30"
+             pattern="[A-Za-z0-9_.-]+" required autocomplete="username" autofocus>
+      <div class="form-text">3–30 characters: letters, numbers, dots, underscores or hyphens.</div>
+
+      <label class="form-label mt-3" for="email">Email</label>
+      <input class="form-control" id="email" type="email" name="email" maxlength="254" required autocomplete="email">
+
+      <label class="form-label mt-3" for="pw">Password</label>
+      <div class="pw-wrap">
+        <input class="form-control" id="pw" type="password" name="password" minlength="10" maxlength="128" required autocomplete="new-password">
+        <button class="pw-toggle" type="button" aria-label="Show or hide password">Show</button>
+      </div>
+      <div class="strength" id="strength" data-level="0"><span></span><span></span><span></span><span></span></div>
+      <div class="form-text">Use at least 10 characters. Longer is stronger.</div>
+
+      <button class="btn btn-primary btn-lg w-100 mt-4">Create account</button>
+      <p class="small text-secondary mt-4 mb-0">Already registered? <a href="{{ url_for('login') }}">Log in</a></p>
+    </form>
+  </section>
+</div>
+{% endblock %}

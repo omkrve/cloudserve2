@@ -1,0 +1,86 @@
+{% from "_macros.html" import avatar, icon %}
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}CloudServe Support{% endblock %}</title>
+  <script>
+    try { var t = localStorage.getItem('cs-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-bs-theme', t); } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet">
+</head>
+<body>
+<header class="cs-nav">
+  <nav class="cs-nav-inner" aria-label="Main">
+    <a class="brand" href="{{ url_for('index') }}">
+      <span class="brand-mark">{{ icon('cloud', 16) }}</span>CloudServe
+    </a>
+    <div class="nav-actions">
+      <button class="icon-btn" type="button" id="theme-toggle" aria-label="Toggle dark mode">
+        <span class="theme-moon">{{ icon('moon', 17) }}</span><span class="theme-sun">{{ icon('sun', 17) }}</span>
+      </button>
+      {% if current_user %}
+        <a class="btn btn-sm btn-ghost d-none d-sm-inline-flex" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('new_ticket') }}">{{ icon('plus', 15) }} <span class="d-none d-sm-inline">New ticket</span></a>
+        <div class="dropdown">
+          <button class="btn p-0 border-0 rounded-circle" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Account menu">
+            {{ avatar(current_user.username) }}
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0 p-2" style="border-radius:16px;min-width:220px;background:var(--surface);border:1px solid var(--line)!important">
+            <li class="px-2 py-2 d-flex gap-2 align-items-center">
+              {{ avatar(current_user.username) }}
+              <div class="lh-sm"><div class="fw-semibold">{{ current_user.username }}</div>
+                <small class="text-secondary">{{ 'Administrator' if current_user.role == 'admin' else 'Requester' }}</small></div>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item rounded-3" href="{{ url_for('dashboard') }}">Dashboard</a></li>
+            <li>
+              <form method="post" action="{{ url_for('logout') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="dropdown-item rounded-3">Log out</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      {% else %}
+        <a class="btn btn-sm btn-ghost" href="{{ url_for('login') }}">Log in</a>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('register') }}">Get started</a>
+      {% endif %}
+    </div>
+  </nav>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-stack" role="status" aria-live="polite">
+    {% for category, message in messages %}
+      <div class="flash flash-{{ category }} alert alert-dismissible fade show" role="alert">
+        <span class="dot"></span><span>{{ message }}</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss"></button>
+      </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<main class="container pb-2">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="foot">
+  <div class="container">
+    <span>© CloudServe IT Service Desk</span>
+    <span>Built for fast, traceable support.</span>
+  </div>
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Error {{ code }} | CloudServe{% endblock %}
+{% block content %}
+<div class="empty card-s my-5 py-5">
+  <div class="err-code">{{ code }}</div>
+  <h1 class="h3 mt-2">
+    {% if code == 404 %}We can't find that page
+    {% elif code == 403 %}You don't have access to this
+    {% elif code == 413 %}That file is too large
+    {% else %}Something went wrong{% endif %}
+  </h1>
+  <p class="mt-2">{{ message }}</p>
+  <div class="d-flex flex-wrap gap-2 justify-content-center">
+    <a class="btn btn-primary" href="{{ url_for('index') }}">Go to home</a>
+    {% if current_user %}<a class="btn btn-ghost" href="{{ url_for('dashboard') }}">Open dashboard</a>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, avatar %}
+{% block title %}CloudServe | IT support that keeps people working{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="row align-items-center g-5">
+    <div class="col-lg-7">
+      <span class="hero-badge mb-4"><i></i> IT service desk</span>
+      <h1>Get tech problems fixed, faster.</h1>
+      <p class="lead mt-4">Report an issue in under a minute, watch it move to resolution, and talk directly to the admin handling it.</p>
+      <div class="d-flex flex-wrap gap-2 mt-4 pt-2">
+        <a class="btn btn-lg btn-light-solid" href="{{ url_for('register') }}">Report an issue {{ icon('arrow', 17) }}</a>
+        <a class="btn btn-lg btn-line-light" href="{{ url_for('login') }}">Log in</a>
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="demo" id="demo" data-step="1" aria-hidden="true">
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="d-id">CS-0128</span>
+          <span class="pill st-open" id="demo-pill"><i></i>Open</span>
+        </div>
+        <div class="d-title mt-2">Office Wi-Fi keeps dropping</div>
+        <div class="d-flex gap-2"><span class="pill pr-high" style="background:rgba(239,106,26,.16)">High</span><span class="pill" style="--c:#aeb8e0">Network</span></div>
+        <div class="demo-track"><span></span><span></span><span></span></div>
+        <div class="demo-msg"><span class="avatar" id="demo-av" style="--h:200">M</span><span class="fade-swap" id="demo-msg">Ticket received.</span></div>
+        <div class="demo-float"><span class="pill st-resolved" style="padding:3px 9px"><i></i>Live</span> Updates in real time</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<h2 class="land-h">Everything a support request needs, in one place.</h2>
+<div class="bento">
+  <article class="tile t-a">
+    <h3>A full history on every ticket</h3>
+    <p>Status changes, assignments and comments are logged with who did what and when, so nothing gets lost between people.</p>
+    <div class="art mini-tl">
+      <div style="--c:var(--accent)">Ticket created <small>09:12</small></div>
+      <div style="--c:var(--warn)">Assigned to an admin, status set to In Progress <small>09:20</small></div>
+      <div style="--c:var(--ok)">Marked Resolved <small>10:05</small></div>
+    </div>
+  </article>
+  <article class="tile accent t-b">
+    <h3>Private by default</h3>
+    <p>You see only your own tickets. Administrators see the full queue.</p>
+  </article>
+  <article class="tile t-c">
+    <h3>Prioritize what hurts</h3>
+    <p>Mark urgency from Low to Critical so the right issues are seen first.</p>
+    <div class="art pill-row">
+      <span class="pill pr-low">Low</span><span class="pill pr-medium">Medium</span><span class="pill pr-high">High</span><span class="pill pr-critical">Critical</span>
+    </div>
+  </article>
+  <article class="tile t-d">
+    <h3>Show, don't describe</h3>
+    <p>Attach a screenshot, PDF or log file up to 5 MB. Support gets the evidence on the first reply.</p>
+    <div class="art pill-row">
+      <span class="pill" style="--c:var(--accent)">{{ icon('clip', 13) }}&nbsp;error-screen.png</span>
+      <span class="pill" style="--c:var(--accent)">{{ icon('clip', 13) }}&nbsp;vpn-debug.log</span>
+      <span class="pill" style="--c:var(--accent)">{{ icon('clip', 13) }}&nbsp;invoice.pdf</span>
+    </div>
+  </article>
+</div>
+
+<h2 class="land-h">From problem to resolved in three steps.</h2>
+<div class="steps">
+  <div class="step"><div class="n">1</div><h4>Describe the issue</h4><p>Add a title, pick a category and priority, and say what you already tried.</p></div>
+  <div class="step"><div class="n">2</div><h4>Follow the progress</h4><p>See the status move from Open to In Progress and reply in the ticket thread.</p></div>
+  <div class="step"><div class="n">3</div><h4>Get back to work</h4><p>An administrator resolves the ticket and the full record stays on file.</p></div>
+</div>
+
+<section class="cta">
+  <h2>Have an issue right now?</h2>
+  <p>Create a free account and submit your first ticket.</p>
+  <a class="btn btn-lg btn-light-solid" href="{{ url_for('register') }}">Create account</a>
+</section>
+{% endblock %}
