@@ -18,23 +18,23 @@ trap cleanup EXIT
 
 # Retrieve application settings from AWS Systems Manager Parameter Store.
 SECRET_KEY=$(aws ssm get-parameter \
-  --name "/cloudserve/prod/secret-key" \
+  --name "/cloudserve/dev/secret-key" \
   --with-decryption \
   --query "Parameter.Value" \
   --output text)
 
 ADMIN_USERNAME=$(aws ssm get-parameter \
-  --name "/cloudserve/prod/admin-username" \
+  --name "/cloudserve/dev/admin-username" \
   --query "Parameter.Value" \
   --output text)
 
 ADMIN_EMAIL=$(aws ssm get-parameter \
-  --name "/cloudserve/prod/admin-email" \
+  --name "/cloudserve/dev/admin-email" \
   --query "Parameter.Value" \
   --output text)
 
 ADMIN_PASSWORD=$(aws ssm get-parameter \
-  --name "/cloudserve/prod/admin-password" \
+  --name "/cloudserve/dev/admin-password" \
   --with-decryption \
   --query "Parameter.Value" \
   --output text)
