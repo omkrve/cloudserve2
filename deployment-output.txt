@@ -1,0 +1,44 @@
+Login Succeeded
+4a8fa3c5e88e202009105bc2ebe9a05e25e6a1bc: Pulling from cloudserve
+304074f06047: Already exists
+0f752a1982d6: Already exists
+759a7f30c318: Already exists
+496c1a902b3a: Already exists
+c27c3cf6f356: Pulling fs layer
+bd1779644d1e: Pulling fs layer
+362d480e78c5: Pulling fs layer
+b1b5a5e6e035: Pulling fs layer
+5929801cd5b6: Pulling fs layer
+599fbb146878: Pulling fs layer
+34b8b4f9ad73: Pulling fs layer
+b1b5a5e6e035: Waiting
+5929801cd5b6: Waiting
+599fbb146878: Waiting
+34b8b4f9ad73: Waiting
+bd1779644d1e: Verifying Checksum
+bd1779644d1e: Download complete
+c27c3cf6f356: Verifying Checksum
+c27c3cf6f356: Download complete
+362d480e78c5: Verifying Checksum
+362d480e78c5: Download complete
+c27c3cf6f356: Pull complete
+5929801cd5b6: Verifying Checksum
+5929801cd5b6: Download complete
+bd1779644d1e: Pull complete
+b1b5a5e6e035: Download complete
+599fbb146878: Verifying Checksum
+599fbb146878: Download complete
+34b8b4f9ad73: Verifying Checksum
+34b8b4f9ad73: Download complete
+362d480e78c5: Pull complete
+b1b5a5e6e035: Pull complete
+5929801cd5b6: Pull complete
+599fbb146878: Pull complete
+34b8b4f9ad73: Pull complete
+Digest: sha256:defafc4b7fc4227339b2f616b3546b672d5399d3690883f4d418296e839cf49a
+Status: Downloaded newer image for 947317651355.dkr.ecr.ap-south-1.amazonaws.com/cloudserve:4a8fa3c5e88e202009105bc2ebe9a05e25e6a1bc
+947317651355.dkr.ecr.ap-south-1.amazonaws.com/cloudserve:4a8fa3c5e88e202009105bc2ebe9a05e25e6a1bc
+5ab1785940856ac0f405016bed7106302bb0a3244cb182d05c7f149cc8a57fc4
+cloudserve-candidate
+Candidate health check failed; existing service was not replaced.
+
